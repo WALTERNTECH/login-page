@@ -4,7 +4,12 @@
   const $ = (id) => document.getElementById(id);
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const views = { login: $('view-login'), otp: $('view-otp'), done: $('view-done') };
+  const views = {
+    services: $('view-services'),
+    login: $('view-login'),
+    otp: $('view-otp'),
+    done: $('view-done')
+  };
 
   const loginForm = $('login-form');
   const emailInput = $('email');
@@ -46,6 +51,11 @@
     stopTimers();
     if (name === 'login') { syncReady(); (emailInput.value ? passwordInput : emailInput).focus(); }
     if (name === 'otp') digits[0].focus();
+  }
+
+  // Any service on the card opens the login.
+  for (const button of document.querySelectorAll('.service')) {
+    button.addEventListener('click', () => show('login'));
   }
 
   function setBusy(button, busy) {
@@ -314,8 +324,8 @@
     await api('/api/auth/logout', {});
     setBusy(button, false);
     emailInput.value = '';
-    setMessage(loginNotice, 'You’ve been logged out.');
-    show('login');
+    setMessage(loginNotice, '');
+    show('services');
   });
 
   // ---------------------------------------------------------- boot
@@ -323,6 +333,6 @@
   api('/api/auth/session').then(({ ok, data }) => {
     if (ok && data.authenticated) return enterDone(data.user);
     if (ok && data.pending) return enterOtp(data.pending);
-    show('login');
+    show('services');
   });
 })();

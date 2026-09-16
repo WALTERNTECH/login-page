@@ -15,6 +15,54 @@
 </head>
 <body>
   <main class="wrap">
+    <!-- Services card (shown first; any row opens the login) -->
+    <section class="view view-card" id="view-services" aria-labelledby="services-title" hidden>
+      <div class="card">
+        <div class="card-logo" aria-hidden="true">S</div>
+        <h1 id="services-title" class="card-title">Smart-<span class="mag">Transacts</span></h1>
+        <p class="card-sub">Just link your <span class="mag">M-WALLET</span> and <span class="mag">Smart-Transacts</span> accounts and enjoy a world of possibilities.</p>
+
+        <ul class="services">
+          <li>
+            <button class="service" type="button" data-go="login">
+              <span class="service-icon icon-make" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 15l4.5-5 3.5 3.5L20 7"/><path d="M15 7h5v5"/></svg>
+              </span>
+              <span class="service-text">
+                <span class="service-title">Make <span class="mag">Payment</span></span>
+                <span class="service-desc">Check the status of your payment.</span>
+              </span>
+              <svg class="service-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
+          </li>
+          <li>
+            <button class="service" type="button" data-go="login">
+              <span class="service-icon icon-accept" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M5 12.5 10 17l9-10"/></svg>
+              </span>
+              <span class="service-text">
+                <span class="service-title">Accept <span class="mag">Refund</span></span>
+                <span class="service-desc">Receive the funds instantly.</span>
+              </span>
+              <span class="service-cta">Accept</span>
+            </button>
+          </li>
+          <li>
+            <button class="service" type="button" data-go="login">
+              <span class="service-icon icon-cancel" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M8 8l8 8M16 8l-8 8"/></svg>
+              </span>
+              <span class="service-text">
+                <span class="service-title">Cancel <span class="mag">Transfer</span></span>
+                <span class="service-desc">Decline the funds, the sender is refunded immediately.</span>
+              </span>
+              <svg class="service-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </section>
+
     <!-- Login -->
     <section class="view" id="view-login" aria-labelledby="login-title" hidden>
       <header class="head">
