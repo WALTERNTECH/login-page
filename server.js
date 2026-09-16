@@ -230,7 +230,11 @@ function pendingPayload(challenge, delivery) {
 
 const app = express();
 app.disable('x-powered-by');
-app.set('trust proxy', 1);
+// Render reaches the app through Cloudflare and two internal hops, so the
+// visitor is three addresses back in X-Forwarded-For. Trusting fewer puts
+// every visitor behind one proxy IP and one shared rate limit; trusting
+// more lets a client pick its own IP by sending the header.
+app.set('trust proxy', 3);
 
 app.use((req, res, next) => {
   res.set({
@@ -290,7 +294,7 @@ app.post('/api/auth/login', async (req, res) => {
   const matches = await bcrypt.compare(password, known ? account.passwordHash : DECOY_HASH);
   if (!known || !matches) {
     failuresByEmail.hit(email);
-    console.log(`[auth] failed sign-in for ${maskEmail(email)} from ${req.ip} xff=${req.get('x-forwarded-for')}`);
+    console.log(`[auth] failed sign-in for ${maskEmail(email)} from ${req.ip}`);
     return res.status(401).json({ error: 'That email and password don’t match.' });
   }
   failuresByEmail.clear(email);
