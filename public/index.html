@@ -103,10 +103,6 @@
         <p class="sub">We sent a 6-digit code to <strong id="otp-email"></strong>.</p>
       </header>
 
-      <div class="notice notice-warn" id="otp-delivery" role="status" hidden>
-        Email delivery isn't set up yet, so the code was written to the server log.
-      </div>
-
       <form id="otp-form" novalidate>
         <fieldset class="otp" id="otp-boxes">
           <legend class="sr-only">Verification code</legend>
@@ -127,8 +123,7 @@
         </button>
       </form>
 
-      <div class="row-between">
-        <button class="link" id="otp-back" type="button">Use a different account</button>
+      <div class="row-center">
         <button class="link link-accent" id="otp-resend" type="button" disabled>Resend code</button>
       </div>
     </section>

@@ -161,7 +161,6 @@
 
   function enterOtp(pending) {
     $('otp-email').textContent = pending.email;
-    $('otp-delivery').hidden = pending.delivery !== 'log';
     setMessage(otpError, '');
     clearDigits();
     show('otp');
@@ -293,7 +292,6 @@
     if (ok) {
       clearDigits();
       digits[0].focus();
-      $('otp-delivery').hidden = data.pending.delivery !== 'log';
       startExpiry(data.pending.expiresIn);
       startResendCooldown(data.pending.resendIn);
       setMessage(otpError, '');
@@ -303,11 +301,6 @@
     if (data.restart) return restart(data.error);
     setMessage(otpError, data.error || 'Couldn’t send a new code.');
     startResendCooldown(data.retryAfter || 0);
-  });
-
-  $('otp-back').addEventListener('click', () => {
-    setMessage(loginNotice, '');
-    show('login');
   });
 
   // ---------------------------------------------------------- signed in

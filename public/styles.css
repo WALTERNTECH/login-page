@@ -413,6 +413,12 @@ h1 {
 .link-accent:hover { color: var(--magenta-deep); }
 .link:disabled { color: var(--ink-3); font-weight: 500; cursor: default; }
 
+.row-center {
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+}
+
 .row-between {
   display: flex;
   align-items: center;
