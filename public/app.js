@@ -2,6 +2,7 @@
 
 (() => {
   const $ = (id) => document.getElementById(id);
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const views = { login: $('view-login'), otp: $('view-otp'), done: $('view-done') };
 
@@ -43,7 +44,7 @@
   function show(name) {
     for (const [key, el] of Object.entries(views)) el.hidden = key !== name;
     stopTimers();
-    if (name === 'login') (emailInput.value ? passwordInput : emailInput).focus();
+    if (name === 'login') { syncReady(); (emailInput.value ? passwordInput : emailInput).focus(); }
     if (name === 'otp') digits[0].focus();
   }
 
@@ -68,8 +69,6 @@
     clearInterval(resendTimer);
   }
 
-  // Timers run against a fixed deadline rather than counting ticks, so a
-  // backgrounded tab still shows the right time when it comes back.
   function countdown(seconds, onTick, onDone) {
     const deadline = Date.now() + seconds * 1000;
     const tick = () => {
@@ -85,6 +84,12 @@
 
   // ---------------------------------------------------------- step 1
 
+  // Colours the Login button once there's an email and a password to send.
+  function syncReady() {
+    const ready = EMAIL_RE.test(emailInput.value.trim()) && passwordInput.value.length > 0;
+    loginSubmit.classList.toggle('is-ready', ready);
+  }
+
   $('reveal').addEventListener('click', (event) => {
     const button = event.currentTarget;
     const reveal = passwordInput.type === 'password';
@@ -98,8 +103,14 @@
     input.addEventListener('input', () => {
       input.removeAttribute('aria-invalid');
       setMessage(loginError, '');
+      syncReady();
     });
   }
+
+  $('register').addEventListener('click', (event) => {
+    event.preventDefault();
+    setMessage(loginNotice, 'Registration isn’t available yet.');
+  });
 
   loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -109,7 +120,7 @@
     const email = emailInput.value.trim();
     const password = passwordInput.value;
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!EMAIL_RE.test(email)) {
       emailInput.setAttribute('aria-invalid', 'true');
       setMessage(loginError, 'Enter a valid email address.');
       return emailInput.focus();
@@ -125,16 +136,18 @@
     setBusy(loginSubmit, false);
 
     if (!ok) {
-      setMessage(loginError, data.error || 'Sign-in failed. Please try again.');
+      setMessage(loginError, data.error || 'Login failed. Please try again.');
       passwordInput.select();
       return;
     }
 
     passwordInput.value = '';
-    enterOtp(data.pending);
+    syncReady();
+    if (data.authenticated) return enterDone(data.user);  // open mode
+    enterOtp(data.pending);                                // strict mode
   });
 
-  // ---------------------------------------------------------- step 2
+  // ---------------------------------------------------------- step 2 (strict)
 
   function enterOtp(pending) {
     $('otp-email').textContent = pending.email;
@@ -177,9 +190,7 @@
     );
   }
 
-  function code() {
-    return digits.map((d) => d.value).join('');
-  }
+  const code = () => digits.map((d) => d.value).join('');
 
   function paint() {
     for (const d of digits) d.classList.toggle('filled', d.value !== '');
@@ -229,8 +240,6 @@
       fillFrom(index, event.clipboardData.getData('text'));
     });
 
-    // Deferred so the mouseup that follows a click doesn't undo the
-    // selection — typing into a filled box then replaces its digit.
     input.addEventListener('focus', () => requestAnimationFrame(() => input.select()));
   });
 
@@ -238,8 +247,7 @@
     setMessage(otpError, message);
     otpBoxes.classList.add('invalid', 'shake');
     otpBoxes.addEventListener('animationend', () => otpBoxes.classList.remove('shake'), { once: true });
-    for (const d of digits) d.value = '';
-    for (const d of digits) d.classList.remove('filled');
+    for (const d of digits) { d.value = ''; d.classList.remove('filled'); }
     digits[0].focus();
   }
 
@@ -306,7 +314,7 @@
     await api('/api/auth/logout', {});
     setBusy(button, false);
     emailInput.value = '';
-    setMessage(loginNotice, 'You’ve been signed out.');
+    setMessage(loginNotice, 'You’ve been logged out.');
     show('login');
   });
 

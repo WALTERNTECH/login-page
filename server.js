@@ -9,6 +9,11 @@ const PORT = Number(process.env.PORT) || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production';
 const APP_NAME = process.env.APP_NAME || 'Waltern Tech';
 
+// Open mode accepts any valid-looking email with any password, so the flow
+// can be walked through before the real sign-in rules are decided. Set
+// AUTH_MODE=strict to require the configured account plus an email code.
+const OPEN_LOGIN = (process.env.AUTH_MODE || 'open') !== 'strict';
+
 const OTP_TTL_MS = 5 * 60 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
 const OTP_RESEND_COOLDOWN_MS = 30 * 1000;
@@ -36,13 +41,16 @@ function loadAccount() {
   const hash = process.env.LOGIN_PASSWORD_HASH;
   const plain = process.env.LOGIN_PASSWORD;
   if (!email || (!hash && !plain)) {
-    console.warn('[auth] LOGIN_EMAIL and LOGIN_PASSWORD_HASH (or LOGIN_PASSWORD) are not set; every sign-in will fail.');
+    if (!OPEN_LOGIN) {
+      console.warn('[auth] AUTH_MODE=strict but LOGIN_EMAIL and LOGIN_PASSWORD_HASH (or LOGIN_PASSWORD) are not set; every sign-in will fail.');
+    }
     return null;
   }
   return { email, passwordHash: hash || bcrypt.hashSync(plain, 12) };
 }
 
-const account = loadAccount();
+// Open mode never checks the account, so don't build one (and don't warn).
+const account = OPEN_LOGIN ? null : loadAccount();
 
 // Compared against when the email is unknown, so a wrong email costs the
 // same time as a wrong password and can't be told apart.
@@ -214,6 +222,13 @@ function getSession(req) {
   return { id, session };
 }
 
+function startSession(res, email) {
+  const sid = newToken();
+  sessions.set(sid, { email, expiresAt: Date.now() + SESSION_TTL_MS });
+  res.cookie(SESSION_COOKIE, sid, cookieOptions(SESSION_TTL_MS));
+  return sid;
+}
+
 function pendingPayload(challenge, delivery) {
   const now = Date.now();
   return {
@@ -289,6 +304,16 @@ app.post('/api/auth/login', async (req, res) => {
   const wait = Math.max(loginByIp.retryAfter(req.ip), failuresByEmail.retryAfter(email));
   if (wait) return tooMany(res, wait);
   loginByIp.hit(req.ip);
+
+  // Any valid email with any password signs in, and skips the email code.
+  if (OPEN_LOGIN) {
+    const previous = readCookie(req, PENDING_COOKIE);
+    if (previous) pending.delete(previous);
+    clearCookie(res, PENDING_COOKIE);
+    startSession(res, email);
+    console.log(`[auth] open sign-in for ${maskEmail(email)} from ${req.ip}`);
+    return res.json({ ok: true, authenticated: true, user: { email } });
+  }
 
   const known = account && account.email === email;
   const matches = await bcrypt.compare(password, known ? account.passwordHash : DECOY_HASH);
@@ -380,10 +405,7 @@ app.post('/api/auth/verify', (req, res) => {
 
   pending.delete(id);
   clearCookie(res, PENDING_COOKIE);
-
-  const sid = newToken();
-  sessions.set(sid, { email: challenge.email, expiresAt: Date.now() + SESSION_TTL_MS });
-  res.cookie(SESSION_COOKIE, sid, cookieOptions(SESSION_TTL_MS));
+  startSession(res, challenge.email);
   res.json({ ok: true, user: { email: challenge.email } });
 });
 
@@ -407,8 +429,9 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`[server] listening on :${PORT}${IS_PROD ? '' : ' (development)'}`);
-  if (!process.env.RESEND_API_KEY) {
+  const mode = OPEN_LOGIN ? 'open — any valid email + password' : 'strict — account + email code';
+  console.log(`[server] listening on :${PORT}${IS_PROD ? '' : ' (development)'} — auth mode: ${mode}`);
+  if (!OPEN_LOGIN && !process.env.RESEND_API_KEY) {
     console.warn('[otp] RESEND_API_KEY is not set; codes will be written to this log instead of emailed.');
   }
 });

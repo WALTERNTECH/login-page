@@ -3,159 +3,104 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sign in · Waltern Tech</title>
-  <meta name="description" content="Sign in to Waltern Tech.">
+  <title>Login · Waltern Tech</title>
+  <meta name="description" content="Login to your account.">
   <meta name="theme-color" content="#ffffff">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="/styles.css">
   <script src="/app.js" defer></script>
 </head>
 <body>
-  <div class="shell">
-    <main class="pane">
-      <header class="brand">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M3.5 6l4 12 4.5-9 4.5 9 4-12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </span>
-        <span class="brand-name">Waltern Tech</span>
+  <main class="wrap">
+    <!-- Login -->
+    <section class="view" id="view-login" aria-labelledby="login-title" hidden>
+      <header class="head">
+        <h1 id="login-title">Login to your account</h1>
+        <p class="sub">Don't have an account? <a class="register" href="#" id="register">Register</a></p>
       </header>
 
-      <div class="stage">
-        <!-- Step 1: credentials -->
-        <section class="view" id="view-login" aria-labelledby="login-title" hidden>
-          <div class="steps" aria-hidden="true"><span class="on"></span><span></span></div>
-          <p class="eyebrow">Step 1 of 2</p>
-          <h1 id="login-title">Welcome back</h1>
-          <p class="lede">Sign in with your email and password.</p>
+      <div class="notice" id="login-notice" role="status" hidden></div>
 
-          <div class="notice" id="login-notice" role="status" hidden></div>
+      <form id="login-form" novalidate>
+        <div class="field">
+          <input id="email" name="email" type="email" autocomplete="username" inputmode="email"
+                 autocapitalize="none" spellcheck="false" placeholder="Email" aria-label="Email" required>
+        </div>
 
-          <form id="login-form" novalidate>
-            <div class="field">
-              <label for="email">Email address</label>
-              <div class="control">
-                <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>
-                <input id="email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="you@company.com" required>
-              </div>
-            </div>
-
-            <div class="field">
-              <label for="password">Password</label>
-              <div class="control">
-                <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10.5" width="16" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
-                <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
-                <button class="reveal" id="reveal" type="button" aria-label="Show password" aria-pressed="false">
-                  <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                  <svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A9.8 9.8 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.9 8.4 2.5 12 2.5 12s3.5 7 9.5 7c1.8 0 3.3-.6 4.6-1.4M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
-                </button>
-              </div>
-            </div>
-
-            <p class="error" id="login-error" role="alert" hidden></p>
-
-            <button class="btn btn-primary" id="login-submit" type="submit">
-              <span class="btn-label">Continue</span>
-              <svg class="btn-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-              <span class="spinner" aria-hidden="true"></span>
-            </button>
-          </form>
-        </section>
-
-        <!-- Step 2: one-time code -->
-        <section class="view" id="view-otp" aria-labelledby="otp-title" hidden>
-          <div class="steps" aria-hidden="true"><span class="on"></span><span class="on"></span></div>
-          <p class="eyebrow">Step 2 of 2</p>
-          <h1 id="otp-title">Check your email</h1>
-          <p class="lede">We sent a 6-digit code to <strong id="otp-email"></strong>.</p>
-
-          <div class="notice notice-warn" id="otp-delivery" role="status" hidden>
-            Email delivery isn’t set up yet, so the code was written to the server log.
-          </div>
-
-          <form id="otp-form" novalidate>
-            <fieldset class="otp" id="otp-boxes">
-              <legend class="sr-only">Verification code</legend>
-              <input class="otp-digit" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Digit 1">
-              <input class="otp-digit" type="text" inputmode="numeric" autocomplete="off" maxlength="1" aria-label="Digit 2">
-              <input class="otp-digit" type="text" inputmode="numeric" autocomplete="off" maxlength="1" aria-label="Digit 3">
-              <span class="otp-sep" aria-hidden="true"></span>
-              <input class="otp-digit" type="text" inputmode="numeric" autocomplete="off" maxlength="1" aria-label="Digit 4">
-              <input class="otp-digit" type="text" inputmode="numeric" autocomplete="off" maxlength="1" aria-label="Digit 5">
-              <input class="otp-digit" type="text" inputmode="numeric" autocomplete="off" maxlength="1" aria-label="Digit 6">
-            </fieldset>
-
-            <p class="meta" id="otp-expiry" aria-live="off"></p>
-            <p class="error" id="otp-error" role="alert" hidden></p>
-
-            <button class="btn btn-primary" id="otp-submit" type="submit">
-              <span class="btn-label">Verify and sign in</span>
-              <span class="spinner" aria-hidden="true"></span>
-            </button>
-          </form>
-
-          <div class="row-between">
-            <button class="link" id="otp-back" type="button">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
-              Use a different account
-            </button>
-            <button class="link link-accent" id="otp-resend" type="button" disabled>Resend code</button>
-          </div>
-        </section>
-
-        <!-- Signed in -->
-        <section class="view" id="view-done" aria-labelledby="done-title" hidden>
-          <div class="done-badge" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
-          </div>
-          <h1 id="done-title">You’re signed in</h1>
-          <p class="lede">Verified with your password and a one-time code.</p>
-
-          <dl class="summary">
-            <div><dt>Account</dt><dd id="done-email"></dd></div>
-            <div><dt>Verification</dt><dd>Password + email code</dd></div>
-            <div><dt>Session</dt><dd>Active on this device</dd></div>
-          </dl>
-
-          <button class="btn btn-secondary" id="logout" type="button">
-            <span class="btn-label">Sign out</span>
-            <span class="spinner" aria-hidden="true"></span>
+        <div class="field">
+          <input id="password" name="password" type="password" autocomplete="current-password"
+                 placeholder="Password" aria-label="Password" required>
+          <button class="reveal" id="reveal" type="button" aria-label="Show password" aria-pressed="false">
+            <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A9.8 9.8 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.9 8.4 2.5 12 2.5 12s3.5 7 9.5 7c1.8 0 3.3-.6 4.6-1.4M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
           </button>
-        </section>
+        </div>
 
-        <noscript><p class="lede">JavaScript is required to sign in.</p></noscript>
+        <p class="error" id="login-error" role="alert" hidden></p>
+
+        <button class="btn" id="login-submit" type="submit">
+          <span class="btn-label">Login</span>
+          <span class="spinner" aria-hidden="true"></span>
+        </button>
+      </form>
+    </section>
+
+    <!-- One-time code (only reached when AUTH_MODE=strict) -->
+    <section class="view" id="view-otp" aria-labelledby="otp-title" hidden>
+      <header class="head">
+        <h1 id="otp-title">Check your email</h1>
+        <p class="sub">We sent a 6-digit code to <strong id="otp-email"></strong>.</p>
+      </header>
+
+      <div class="notice notice-warn" id="otp-delivery" role="status" hidden>
+        Email delivery isn't set up yet, so the code was written to the server log.
       </div>
 
-      <footer class="foot">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3Z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg>
-        Protected by two-step verification
-      </footer>
-    </main>
+      <form id="otp-form" novalidate>
+        <fieldset class="otp" id="otp-boxes">
+          <legend class="sr-only">Verification code</legend>
+          <input class="otp-digit" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Digit 1">
+          <input class="otp-digit" type="text" inputmode="numeric" autocomplete="off" maxlength="1" aria-label="Digit 2">
+          <input class="otp-digit" type="text" inputmode="numeric" autocomplete="off" maxlength="1" aria-label="Digit 3">
+          <input class="otp-digit" type="text" inputmode="numeric" autocomplete="off" maxlength="1" aria-label="Digit 4">
+          <input class="otp-digit" type="text" inputmode="numeric" autocomplete="off" maxlength="1" aria-label="Digit 5">
+          <input class="otp-digit" type="text" inputmode="numeric" autocomplete="off" maxlength="1" aria-label="Digit 6">
+        </fieldset>
 
-    <aside class="showcase" aria-hidden="true">
-      <svg class="orbits" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">
-        <circle cx="440" cy="170" r="90"/>
-        <circle cx="440" cy="170" r="170"/>
-        <circle cx="440" cy="170" r="250"/>
-        <circle cx="440" cy="170" r="330"/>
-        <circle cx="440" cy="170" r="410"/>
-        <circle class="node" cx="530" cy="170" r="4"/>
-        <circle class="node" cx="302" cy="270" r="3"/>
-        <circle class="node node-bright" cx="440" cy="420" r="5"/>
-      </svg>
-      <div class="showcase-inner">
-        <span class="pill"><span class="pill-dot"></span>Two-step sign-in</span>
-        <p class="display">Your account,<br><em>guarded twice.</em></p>
-        <p class="showcase-copy">Your password proves you know the secret. A one-time email code proves it’s really you.</p>
-        <ol class="flow">
-          <li><span>01</span>Password</li>
-          <li><span>02</span>Email code</li>
-          <li><span>03</span>Access</li>
-        </ol>
+        <p class="meta" id="otp-expiry" aria-live="off"></p>
+        <p class="error" id="otp-error" role="alert" hidden></p>
+
+        <button class="btn" id="otp-submit" type="submit">
+          <span class="btn-label">Verify and sign in</span>
+          <span class="spinner" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <div class="row-between">
+        <button class="link" id="otp-back" type="button">Use a different account</button>
+        <button class="link link-accent" id="otp-resend" type="button" disabled>Resend code</button>
       </div>
-    </aside>
-  </div>
+    </section>
+
+    <!-- Signed in -->
+    <section class="view" id="view-done" aria-labelledby="done-title" hidden>
+      <div class="done-badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+      </div>
+      <header class="head">
+        <h1 id="done-title">You're logged in</h1>
+        <p class="sub">Signed in as <strong id="done-email"></strong>.</p>
+      </header>
+      <button class="btn btn-ghost" id="logout" type="button">
+        <span class="btn-label">Log out</span>
+        <span class="spinner" aria-hidden="true"></span>
+      </button>
+    </section>
+
+    <noscript><p class="sub">JavaScript is required to log in.</p></noscript>
+  </main>
 </body>
 </html>
