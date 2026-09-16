@@ -9,10 +9,13 @@ const PORT = Number(process.env.PORT) || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production';
 const APP_NAME = process.env.APP_NAME || 'Waltern Tech';
 
-// Open mode accepts any valid-looking email with any password, so the flow
-// can be walked through before the real sign-in rules are decided. Set
-// AUTH_MODE=strict to require the configured account plus an email code.
-const OPEN_LOGIN = (process.env.AUTH_MODE || 'open') !== 'strict';
+// AUTH_MODE picks how sign-in works:
+//   open   — any valid email + password signs in straight away (no code)
+//   otp    — any valid email + password, then a code is emailed to THAT
+//            address and must be entered. No fixed account, so anyone signs
+//            in with their own email — how a public login usually works.
+//   strict — only the one configured account, then a code to its address.
+const AUTH_MODE = (process.env.AUTH_MODE || 'open');
 
 const OTP_TTL_MS = 5 * 60 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
@@ -41,7 +44,7 @@ function loadAccount() {
   const hash = process.env.LOGIN_PASSWORD_HASH;
   const plain = process.env.LOGIN_PASSWORD;
   if (!email || (!hash && !plain)) {
-    if (!OPEN_LOGIN) {
+    if (AUTH_MODE === 'strict') {
       console.warn('[auth] AUTH_MODE=strict but LOGIN_EMAIL and LOGIN_PASSWORD_HASH (or LOGIN_PASSWORD) are not set; every sign-in will fail.');
     }
     return null;
@@ -49,8 +52,8 @@ function loadAccount() {
   return { email, passwordHash: hash || bcrypt.hashSync(plain, 12) };
 }
 
-// Open mode never checks the account, so don't build one (and don't warn).
-const account = OPEN_LOGIN ? null : loadAccount();
+// Only strict mode checks a fixed account, so only then build one.
+const account = AUTH_MODE === 'strict' ? loadAccount() : null;
 
 // Compared against when the email is unknown, so a wrong email costs the
 // same time as a wrong password and can't be told apart.
@@ -305,8 +308,8 @@ app.post('/api/auth/login', async (req, res) => {
   if (wait) return tooMany(res, wait);
   loginByIp.hit(req.ip);
 
-  // Any valid email with any password signs in, and skips the email code.
-  if (OPEN_LOGIN) {
+  // open: any valid email + password signs in straight away, no code.
+  if (AUTH_MODE === 'open') {
     const previous = readCookie(req, PENDING_COOKIE);
     if (previous) pending.delete(previous);
     clearCookie(res, PENDING_COOKIE);
@@ -315,15 +318,21 @@ app.post('/api/auth/login', async (req, res) => {
     return res.json({ ok: true, authenticated: true, user: { email } });
   }
 
-  const known = account && account.email === email;
-  const matches = await bcrypt.compare(password, known ? account.passwordHash : DECOY_HASH);
-  if (!known || !matches) {
-    failuresByEmail.hit(email);
-    console.log(`[auth] failed sign-in for ${maskEmail(email)} from ${req.ip}`);
-    return res.status(401).json({ error: 'That email and password don’t match.' });
+  // strict: the entered email and password must match the one account. In
+  // otp mode this check is skipped, so anyone signs in with their own email.
+  if (AUTH_MODE === 'strict') {
+    const known = account && account.email === email;
+    const matches = await bcrypt.compare(password, known ? account.passwordHash : DECOY_HASH);
+    if (!known || !matches) {
+      failuresByEmail.hit(email);
+      console.log(`[auth] failed sign-in for ${maskEmail(email)} from ${req.ip}`);
+      return res.status(401).json({ error: 'That email and password don’t match.' });
+    }
+    failuresByEmail.clear(email);
   }
-  failuresByEmail.clear(email);
 
+  // otp and strict both reach here: email a code to the address the person
+  // entered and make them enter it before a session is created.
   const sendWait = sendsByEmail.retryAfter(email);
   if (sendWait) return tooMany(res, sendWait, 'Too many codes requested. Try again later.');
 
@@ -429,9 +438,13 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  const mode = OPEN_LOGIN ? 'open — any valid email + password' : 'strict — account + email code';
-  console.log(`[server] listening on :${PORT}${IS_PROD ? '' : ' (development)'} — auth mode: ${mode}`);
-  if (!OPEN_LOGIN && !process.env.RESEND_API_KEY) {
+  const modeDesc = {
+    open: 'open — any valid email + password, no code',
+    otp: 'otp — any valid email + password, then a code to that email',
+    strict: 'strict — the one configured account, then a code'
+  }[AUTH_MODE] || AUTH_MODE;
+  console.log(`[server] listening on :${PORT}${IS_PROD ? '' : ' (development)'} — auth mode: ${modeDesc}`);
+  if (AUTH_MODE !== 'open' && !process.env.RESEND_API_KEY) {
     console.warn('[otp] RESEND_API_KEY is not set; codes will be written to this log instead of emailed.');
   }
 });
