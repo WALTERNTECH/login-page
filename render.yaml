@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: login-page
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOGIN_EMAIL
+        sync: false
+      - key: LOGIN_PASSWORD_HASH
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
